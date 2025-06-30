@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ConnectTeachableModal } from '@/components/dashboard/connect-teachable-modal'
 import { 
   BarChart3, 
   Users, 
@@ -14,18 +15,88 @@ import {
   Settings,
   Bell,
   Search,
-  Plus
+  Plus,
+  CheckCircle,
+  Clock,
+  XCircle,
+  RefreshCw
 } from 'lucide-react'
+
+interface Integration {
+  id: string
+  platform: string
+  sync_status: 'pending' | 'active' | 'error' | 'inactive'
+  last_sync: string | null
+  created_at: string
+  updated_at: string
+}
 
 export default function DashboardPage() {
   const { user, loading, signOut } = useAuth()
   const router = useRouter()
+  const [integrations, setIntegrations] = useState<Integration[]>([])
+  const [integrationsLoading, setIntegrationsLoading] = useState(true)
+  const [showTeachableModal, setShowTeachableModal] = useState(false)
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/signin')
     }
   }, [user, loading, router])
+
+  // Fetch integrations
+  useEffect(() => {
+    if (user) {
+      fetchIntegrations()
+    }
+  }, [user])
+
+  const fetchIntegrations = async () => {
+    try {
+      const response = await fetch('/api/integrations')
+      if (response.ok) {
+        const data = await response.json()
+        setIntegrations(data.integrations)
+      }
+    } catch (error) {
+      console.error('Failed to fetch integrations:', error)
+    } finally {
+      setIntegrationsLoading(false)
+    }
+  }
+
+  const handleTeachableSuccess = () => {
+    fetchIntegrations() // Refresh integrations
+  }
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'active':
+        return <CheckCircle className="h-4 w-4 text-green-500" />
+      case 'pending':
+        return <Clock className="h-4 w-4 text-yellow-500" />
+      case 'error':
+        return <XCircle className="h-4 w-4 text-red-500" />
+      default:
+        return <Clock className="h-4 w-4 text-gray-400" />
+    }
+  }
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'Connected'
+      case 'pending':
+        return 'Syncing...'
+      case 'error':
+        return 'Error'
+      default:
+        return 'Inactive'
+    }
+  }
+
+  const teachableIntegration = integrations.find(i => i.platform === 'teachable')
+  const hasTeachableConnection = !!teachableIntegration
 
   if (loading) {
     return (
@@ -159,13 +230,16 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Getting started */}
+        {/* Getting started / Integrations */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <Card>
             <CardHeader>
-              <CardTitle>Connect Your First Platform</CardTitle>
+              <CardTitle>Platform Integrations</CardTitle>
               <CardDescription>
-                Start analyzing your course performance by connecting Teachable
+                {hasTeachableConnection 
+                  ? 'Manage your connected platforms' 
+                  : 'Connect your first platform to start analyzing your courses'
+                }
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -177,14 +251,49 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <h4 className="font-medium">Teachable</h4>
-                      <p className="text-sm text-gray-600">Connect your Teachable school</p>
+                      <div className="flex items-center space-x-2">
+                        {integrationsLoading ? (
+                          <div className="flex items-center space-x-2">
+                            <RefreshCw className="h-3 w-3 animate-spin text-gray-400" />
+                            <span className="text-sm text-gray-500">Loading...</span>
+                          </div>
+                        ) : hasTeachableConnection ? (
+                          <div className="flex items-center space-x-2">
+                            {getStatusIcon(teachableIntegration.sync_status)}
+                            <span className="text-sm text-gray-600">
+                              {getStatusText(teachableIntegration.sync_status)}
+                            </span>
+                            {teachableIntegration.last_sync && (
+                              <span className="text-xs text-gray-500">
+                                • Last sync: {new Date(teachableIntegration.last_sync).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-600">Connect your Teachable school</p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Connect
-                  </Button>
+                  {!hasTeachableConnection ? (
+                    <Button onClick={() => setShowTeachableModal(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Connect
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="sm" onClick={fetchIntegrations}>
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Sync
+                    </Button>
+                  )}
                 </div>
+
+                {!hasTeachableConnection && (
+                  <div className="text-center py-4 text-gray-500 border-t">
+                    <p className="text-sm">More platforms coming soon!</p>
+                    <p className="text-xs">Thinkific, Kajabi, and others</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -198,11 +307,49 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="text-center py-8 text-gray-500">
-                  <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No activity yet</p>
-                  <p className="text-sm">Connect a platform to see your course analytics</p>
-                </div>
+                {hasTeachableConnection && teachableIntegration.sync_status === 'active' ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        <div>
+                          <p className="font-medium text-green-900">Teachable Connected</p>
+                          <p className="text-sm text-green-700">
+                            Data sync completed successfully
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-xs text-green-600">
+                        {teachableIntegration.last_sync && 
+                          new Date(teachableIntegration.last_sync).toLocaleString()
+                        }
+                      </span>
+                    </div>
+                    <div className="text-center py-4 text-gray-500">
+                      <TrendingUp className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">Course analytics will appear here</p>
+                      <p className="text-xs">Coming soon: detailed course insights</p>
+                    </div>
+                  </div>
+                ) : hasTeachableConnection && teachableIntegration.sync_status === 'pending' ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <RefreshCw className="h-12 w-12 mx-auto mb-4 opacity-50 animate-spin" />
+                    <p>Syncing your Teachable data...</p>
+                    <p className="text-sm">This may take a few minutes</p>
+                  </div>
+                ) : hasTeachableConnection && teachableIntegration.sync_status === 'error' ? (
+                  <div className="text-center py-8 text-red-500">
+                    <XCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Sync failed</p>
+                    <p className="text-sm">Please check your credentials and try again</p>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No activity yet</p>
+                    <p className="text-sm">Connect a platform to see your course analytics</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -234,6 +381,13 @@ export default function DashboardPage() {
           </div>
         )}
       </main>
+
+      {/* Connect Teachable Modal */}
+      <ConnectTeachableModal
+        isOpen={showTeachableModal}
+        onClose={() => setShowTeachableModal(false)}
+        onSuccess={handleTeachableSuccess}
+      />
     </div>
   )
 } 
