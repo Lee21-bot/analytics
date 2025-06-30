@@ -1,25 +1,25 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/contexts/auth-context'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ConnectTeachableModal } from '@/components/dashboard/connect-teachable-modal'
+import { AnalyticsOverview } from '@/components/dashboard/analytics-overview'
+import { useAuth } from '@/contexts/auth-context'
+import { getDemoData } from '@/lib/demo-data'
+import { useDashboardAnalytics } from '@/hooks/use-analytics'
 import { 
-  BarChart3, 
+  DollarSign, 
   Users, 
   TrendingUp, 
-  DollarSign, 
-  BookOpen,
-  Settings,
-  Bell,
-  Search,
-  Plus,
-  CheckCircle,
-  Clock,
+  BookOpen, 
+  Activity, 
+  CheckCircle, 
+  Clock, 
   XCircle,
-  RefreshCw
+  Plus,
+  Download
 } from 'lucide-react'
 
 interface Integration {
@@ -37,6 +37,10 @@ export default function DashboardPage() {
   const [integrations, setIntegrations] = useState<Integration[]>([])
   const [integrationsLoading, setIntegrationsLoading] = useState(true)
   const [showTeachableModal, setShowTeachableModal] = useState(false)
+  const [demoData, setDemoData] = useState<any>(null)
+
+  // Get real analytics data when integrations are active
+  const { metrics: realMetrics, isLoading: analyticsLoading } = useDashboardAnalytics()
 
   useEffect(() => {
     if (!loading && !user) {
@@ -78,7 +82,7 @@ export default function DashboardPage() {
       case 'error':
         return <XCircle className="h-4 w-4 text-red-500" />
       default:
-        return <Clock className="h-4 w-4 text-gray-400" />
+        return <Clock className="h-4 w-4 text-muted-foreground" />
     }
   }
 
@@ -95,13 +99,26 @@ export default function DashboardPage() {
     }
   }
 
+  // Load demo data only when no active integrations exist
+  useEffect(() => {
+    const teachableIntegration = integrations.find(i => i.platform === 'teachable')
+    const hasActiveIntegration = teachableIntegration?.sync_status === 'active'
+    
+    if (!hasActiveIntegration && !integrationsLoading && !realMetrics) {
+      const data = getDemoData()
+      setDemoData(data)
+    } else {
+      setDemoData(null) // Clear demo data when real data is available
+    }
+  }, [integrations, integrationsLoading, realMetrics])
+
   const teachableIntegration = integrations.find(i => i.platform === 'teachable')
-  const hasTeachableConnection = !!teachableIntegration
+  const hasActiveIntegration = teachableIntegration?.sync_status === 'active'
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     )
   }
@@ -111,278 +128,357 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <div className="flex items-center space-x-2">
-              <BarChart3 className="h-8 w-8 text-primary-500" />
-              <span className="text-xl font-bold text-gray-900">CourseIQ</span>
-            </div>
-
-            {/* Search */}
-            <div className="flex-1 max-w-lg mx-8">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search courses, students..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-
-            {/* User menu */}
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm">
-                <Bell className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="sm">
-                <Settings className="h-4 w-4" />
-              </Button>
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                  {user.full_name?.[0] || user.email[0].toUpperCase()}
-                </div>
-                <span className="text-sm font-medium text-gray-700">
-                  {user.full_name || user.email}
-                </span>
-              </div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={signOut}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                Sign out
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-blue-50/20">
+      {/* Background Pattern */}
+      <div 
+        className="fixed inset-0 opacity-[0.03] pointer-events-none"
+        style={{
+          backgroundImage: `radial-gradient(circle at 1px 1px, rgb(75, 85, 99) 1px, transparent 0)`,
+          backgroundSize: '40px 40px'
+        }}
+      />
+      
       {/* Main content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Welcome back, {user.full_name || 'there'}!
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Here's what's happening with your courses today.
-          </p>
-        </div>
-
-        {/* Quick stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-gray-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">$12,345</div>
-              <p className="text-xs text-green-600">
-                +20.1% from last month
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">
+                Welcome back, {user.full_name || 'there'}!
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                Here's what's happening with your courses today.
               </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Students</CardTitle>
-              <Users className="h-4 w-4 text-gray-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">573</div>
-              <p className="text-xs text-green-600">
-                +15.3% from last month
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Course Views</CardTitle>
-              <TrendingUp className="h-4 w-4 text-gray-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">12,854</div>
-              <p className="text-xs text-green-600">
-                +8.2% from last month
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
-              <BookOpen className="h-4 w-4 text-gray-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">67%</div>
-              <p className="text-xs text-green-600">
-                +2.5% from last month
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Getting started / Integrations */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Platform Integrations</CardTitle>
-              <CardDescription>
-                {hasTeachableConnection 
-                  ? 'Manage your connected platforms' 
-                  : 'Connect your first platform to start analyzing your courses'
-                }
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <BookOpen className="h-5 w-5 text-purple-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium">Teachable</h4>
-                      <div className="flex items-center space-x-2">
-                        {integrationsLoading ? (
-                          <div className="flex items-center space-x-2">
-                            <RefreshCw className="h-3 w-3 animate-spin text-gray-400" />
-                            <span className="text-sm text-gray-500">Loading...</span>
-                          </div>
-                        ) : hasTeachableConnection ? (
-                          <div className="flex items-center space-x-2">
-                            {getStatusIcon(teachableIntegration.sync_status)}
-                            <span className="text-sm text-gray-600">
-                              {getStatusText(teachableIntegration.sync_status)}
-                            </span>
-                            {teachableIntegration.last_sync && (
-                              <span className="text-xs text-gray-500">
-                                • Last sync: {new Date(teachableIntegration.last_sync).toLocaleDateString()}
-                              </span>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-gray-600">Connect your Teachable school</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  {!hasTeachableConnection ? (
-                    <Button onClick={() => setShowTeachableModal(true)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Connect
-                    </Button>
-                  ) : (
-                    <Button variant="outline" size="sm" onClick={fetchIntegrations}>
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Sync
-                    </Button>
-                  )}
-                </div>
-
-                {!hasTeachableConnection && (
-                  <div className="text-center py-4 text-gray-500 border-t">
-                    <p className="text-sm">More platforms coming soon!</p>
-                    <p className="text-xs">Thinkific, Kajabi, and others</p>
-                  </div>
-                )}
+            </div>
+            {/* Data source indicator */}
+            {demoData && !hasActiveIntegration && (
+              <div className="hidden sm:flex items-center space-x-2 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-blue-700">Demo Mode</span>
+                <span className="text-xs text-blue-600">Connect platform for real data</span>
               </div>
-            </CardContent>
-          </Card>
+            )}
+            {hasActiveIntegration && (
+              <div className="hidden sm:flex items-center space-x-2 bg-green-50 border border-green-200 rounded-lg px-4 py-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-sm font-medium text-green-700">Live Data</span>
+                <span className="text-xs text-green-600">Real-time analytics</span>
+              </div>
+            )}
+          </div>
+        </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>
-                Latest updates from your connected platforms
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {hasTeachableConnection && teachableIntegration.sync_status === 'active' ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <CheckCircle className="h-5 w-5 text-green-500" />
-                        <div>
-                          <p className="font-medium text-green-900">Teachable Connected</p>
-                          <p className="text-sm text-green-700">
-                            Data sync completed successfully
-                          </p>
+        {/* Real Analytics Overview (when integration is active) */}
+        {hasActiveIntegration && (
+          <div className="mb-8">
+            <AnalyticsOverview />
+          </div>
+        )}
+
+        {/* Demo Analytics Overview (when no active integration) */}
+        {!hasActiveIntegration && demoData && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-foreground">Demo Analytics Overview</h2>
+                <p className="text-muted-foreground">Sample data showing what your dashboard could look like</p>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Button variant="outline" onClick={() => router.push('/reports')}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Reports
+                </Button>
+                <Button variant="slider" onClick={() => setShowTeachableModal(true)}>
+                  <span className="mr-2">🔗</span>
+                  Connect for Real Data
+                </Button>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">${demoData.totalRevenue.toLocaleString()}</div>
+                  <p className="text-xs text-green-600 font-medium">+12% from last month</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Active Students</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{demoData.totalStudents.toLocaleString()}</div>
+                  <p className="text-xs text-green-600 font-medium">+8% from last month</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Courses</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{demoData.totalCourses}</div>
+                  <p className="text-xs text-blue-600 font-medium">Active and earning</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Avg Completion</CardTitle>
+                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{demoData.avgCompletionRate}%</div>
+                  <p className="text-xs text-green-600 font-medium">+5% from last month</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
+
+        {/* Integrations Management Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Quick Stats */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="grid grid-cols-2 gap-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {hasActiveIntegration && realMetrics ? 
+                      `$${realMetrics.totalRevenue.toLocaleString()}` :
+                      demoData ? `$${demoData.totalRevenue.toLocaleString()}` : '--'
+                    }
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {hasActiveIntegration ? 'Real-time data from your platform' :
+                     demoData ? 'Demo data - connect platform for real metrics' : 'Connect platform to view'}
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Students</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {hasActiveIntegration && realMetrics ? 
+                      realMetrics.totalStudents.toLocaleString() :
+                      demoData ? demoData.totalStudents.toLocaleString() : '--'
+                    }
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {hasActiveIntegration ? 'Real-time data from your platform' :
+                     demoData ? 'Demo data - connect platform for real metrics' : 'Connect platform to view'}
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Active Courses</CardTitle>
+                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                                         {hasActiveIntegration && realMetrics?.topCourses ? 
+                       realMetrics.topCourses.length :
+                       demoData ? demoData.totalCourses : '--'
+                     }
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {hasActiveIntegration ? 'Real-time data from your platform' :
+                     demoData ? 'Demo data - connect platform for real metrics' : 'Connect platform to view'}
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Avg Completion</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {hasActiveIntegration && realMetrics ? 
+                      `${Math.round(realMetrics.averageCompletionRate)}%` :
+                      demoData ? `${demoData.avgCompletionRate}%` : '--'
+                    }
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {hasActiveIntegration ? 'Real-time data from your platform' :
+                     demoData ? 'Demo data - connect platform for real metrics' : 'Connect platform to view'}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Top Courses Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Top Performing Courses</CardTitle>
+              </CardHeader>
+              <CardContent>
+                                 {hasActiveIntegration && realMetrics?.topCourses?.length ? (
+                   <div className="space-y-4">
+                     {realMetrics.topCourses.slice(0, 3).map((course, index) => (
+                       <div key={course.id} className="flex items-center justify-between p-4 border rounded-lg">
+                         <div className="flex items-center space-x-3">
+                           <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                             <span className="text-blue-600 font-semibold text-sm">#{index + 1}</span>
+                           </div>
+                           <div>
+                             <h4 className="font-medium">{course.title}</h4>
+                             <p className="text-sm text-muted-foreground">{course.students} students</p>
+                           </div>
+                         </div>
+                         <div className="text-right">
+                           <p className="font-semibold">${course.revenue.toLocaleString()}</p>
+                           <p className="text-sm text-muted-foreground">{Math.round(course.completionRate)}% completion</p>
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                ) : demoData && demoData.topCourses.length > 0 ? (
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Demo courses - {demoData.topCourses.length} courses
+                    </p>
+                    {demoData.topCourses.slice(0, 3).map((course: any, index: number) => (
+                      <div key={course.id} className="flex items-center justify-between p-4 border rounded-lg bg-blue-50/50">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-blue-600 font-semibold text-sm">#{index + 1}</span>
+                          </div>
+                          <div>
+                            <h4 className="font-medium">{course.title}</h4>
+                            <p className="text-sm text-muted-foreground">{course.students} students</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">${course.revenue.toLocaleString()}</p>
+                          <p className="text-sm text-muted-foreground">{course.completionRate}% completion</p>
                         </div>
                       </div>
-                      <span className="text-xs text-green-600">
-                        {teachableIntegration.last_sync && 
-                          new Date(teachableIntegration.last_sync).toLocaleString()
-                        }
-                      </span>
-                    </div>
-                    <div className="text-center py-4 text-gray-500">
-                      <TrendingUp className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">Course analytics will appear here</p>
-                      <p className="text-xs">Coming soon: detailed course insights</p>
-                    </div>
-                  </div>
-                ) : hasTeachableConnection && teachableIntegration.sync_status === 'pending' ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <RefreshCw className="h-12 w-12 mx-auto mb-4 opacity-50 animate-spin" />
-                    <p>Syncing your Teachable data...</p>
-                    <p className="text-sm">This may take a few minutes</p>
-                  </div>
-                ) : hasTeachableConnection && teachableIntegration.sync_status === 'error' ? (
-                  <div className="text-center py-8 text-red-500">
-                    <XCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Sync failed</p>
-                    <p className="text-sm">Please check your credentials and try again</p>
+                    ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No activity yet</p>
-                    <p className="text-sm">Connect a platform to see your course analytics</p>
+                  <div className="text-center py-8">
+                    <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-muted-foreground mb-2">No course data</h3>
+                    <p className="text-sm text-muted-foreground">Connect your platform to see your top courses</p>
                   </div>
                 )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Trial info */}
-        {user.subscription_tier === 'starter' && (
-          <div className="mt-8">
-            <Card className="bg-primary-50 border-primary-200">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold text-primary-900">
-                      Free Trial Active
-                    </h3>
-                    <p className="text-primary-700 text-sm">
-                      {user.trial_ends_at ? 
-                        `Trial ends ${new Date(user.trial_ends_at).toLocaleDateString()}` : 
-                        '7 days remaining'
-                      }
-                    </p>
-                  </div>
-                  <Button>
-                    Upgrade Now
-                  </Button>
-                </div>
               </CardContent>
             </Card>
           </div>
-        )}
+
+          {/* Integrations Panel */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  Platform Integrations
+                  <Button 
+                    size="sm" 
+                    onClick={() => setShowTeachableModal(true)}
+                    className="ml-2"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Connect
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {integrationsLoading ? (
+                  <div className="space-y-3">
+                    {[1, 2].map((i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="h-16 bg-gray-200 rounded-lg"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : integrations.length > 0 ? (
+                  integrations.map((integration) => (
+                    <div key={integration.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                          <BookOpen className="h-5 w-5 text-purple-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium capitalize">{integration.platform}</h4>
+                          <div className="flex items-center space-x-2">
+                            {getStatusIcon(integration.sync_status)}
+                            <span className="text-sm text-muted-foreground">
+                              {getStatusText(integration.sync_status)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-6">
+                    <Activity className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground mb-3">No integrations connected</p>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => setShowTeachableModal(true)}
+                    >
+                      Connect Teachable
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start" 
+                  onClick={() => router.push('/students')}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  View All Students
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => router.push('/reports')}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Generate Reports
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => router.push('/settings')}
+                >
+                  <Activity className="h-4 w-4 mr-2" />
+                  Account Settings
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </main>
 
-      {/* Connect Teachable Modal */}
+      {/* Teachable Connection Modal */}
       <ConnectTeachableModal
         isOpen={showTeachableModal}
         onClose={() => setShowTeachableModal(false)}

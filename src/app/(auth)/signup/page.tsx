@@ -2,10 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { BarChart3, Eye, EyeOff, Check } from 'lucide-react'
+import { Eye, EyeOff, Check } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -60,6 +60,7 @@ export default function SignUpPage() {
       await signUp(email, password, fullName || undefined)
       router.push('/dashboard')
     } catch (error: any) {
+      console.error('Sign up error:', error)
       setError(error.message || 'Something went wrong. Please try again.')
     } finally {
       setLoading(false)
@@ -67,33 +68,46 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="flex items-center justify-center mb-8">
-          <div className="flex items-center space-x-2">
-            <BarChart3 className="h-8 w-8 text-primary-500" />
-            <span className="text-2xl font-bold text-gray-900">CourseIQ</span>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background Shapes */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-green-200/30 rounded-full"></div>
+        <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-blue-200/30 rounded-full"></div>
+        <div className="absolute top-1/3 right-1/4 w-32 h-32 bg-orange-200/30 rounded-2xl rotate-12"></div>
+      </div>
 
-        <Card className="animate-slide-up">
-          <CardHeader className="text-center">
-            <CardTitle>Create your account</CardTitle>
-            <CardDescription>
+      <div className="w-full max-w-md relative z-10">
+        {/* Logo */}
+        <Link href="/" className="flex items-center justify-center mb-8 group">
+          <Image
+            src="/courseiq.png"
+            alt="CourseIQ Logo"
+            width={48}
+            height={48}
+            className="h-12 w-auto transition-transform group-hover:scale-105"
+          />
+          <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent ml-3">
+            CourseIQ
+          </span>
+        </Link>
+
+        <Card className="shadow-xl border-0 bg-card/90 backdrop-blur-sm">
+          <CardHeader className="text-center pb-4">
+            <CardTitle className="text-2xl font-bold text-gray-900">Create your account</CardTitle>
+            <CardDescription className="text-gray-600">
               Start your 7-day free trial and optimize your courses
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-600">
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
                   {error}
                 </div>
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name (Optional)</Label>
+                <Label htmlFor="fullName" className="text-gray-700 font-medium">Full Name (Optional)</Label>
                 <Input
                   id="fullName"
                   type="text"
@@ -101,11 +115,12 @@ export default function SignUpPage() {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   disabled={loading}
+                  className="rounded-xl border-gray-200 focus:border-blue-500 h-12"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email *</Label>
+                <Label htmlFor="email" className="text-gray-700 font-medium">Email *</Label>
                 <Input
                   id="email"
                   type="email"
@@ -113,12 +128,13 @@ export default function SignUpPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
+                  className="rounded-xl border-gray-200 focus:border-blue-500 h-12"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password *</Label>
+                <Label htmlFor="password" className="text-gray-700 font-medium">Password *</Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -127,14 +143,15 @@ export default function SignUpPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={loading}
+                    className="rounded-xl border-gray-200 focus:border-blue-500 h-12 pr-12"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
                 <p className="text-xs text-gray-500">
@@ -143,7 +160,7 @@ export default function SignUpPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                <Label htmlFor="confirmPassword" className="text-gray-700 font-medium">Confirm Password *</Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
@@ -152,26 +169,27 @@ export default function SignUpPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     disabled={loading}
+                    className="rounded-xl border-gray-200 focus:border-blue-500 h-12 pr-12"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                   >
-                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-start space-x-2">
+              <div className="flex items-start space-x-3">
                 <button
                   type="button"
                   onClick={() => setAgreedToTerms(!agreedToTerms)}
-                  className={`flex-shrink-0 w-4 h-4 mt-0.5 rounded border border-gray-300 flex items-center justify-center transition-colors ${
+                  className={`flex-shrink-0 w-5 h-5 mt-0.5 rounded border-2 flex items-center justify-center transition-all duration-200 ${
                     agreedToTerms
-                      ? 'bg-primary-500 border-primary-500 text-white'
-                      : 'bg-white hover:bg-gray-50'
+                      ? 'bg-blue-600 border-blue-600 text-white'
+                      : 'bg-white border-gray-300 hover:border-blue-400'
                   }`}
                 >
                   {agreedToTerms && <Check className="h-3 w-3" />}
@@ -180,52 +198,62 @@ export default function SignUpPage() {
                   I agree to the{' '}
                   <Link
                     href="/terms"
-                    className="text-primary-500 hover:text-primary-600 transition-colors"
+                    className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
                   >
                     Terms of Service
                   </Link>{' '}
                   and{' '}
                   <Link
                     href="/privacy"
-                    className="text-primary-500 hover:text-primary-600 transition-colors"
+                    className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
                   >
                     Privacy Policy
                   </Link>
                 </div>
               </div>
 
-              <Button
+              <button
                 type="submit"
-                className="w-full"
-                loading={loading}
                 disabled={loading}
+                className="group relative overflow-hidden w-full bg-blue-600 text-white py-3 rounded-2xl font-semibold text-lg transition-all duration-300 hover:transform hover:-translate-y-0.5 hover:shadow-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Start Free Trial
-              </Button>
+                <span className="absolute inset-0 bg-gradient-to-r from-blue-700 to-green-600 transform translate-x-full group-hover:translate-x-0 transition-transform duration-300"></span>
+                <span className="relative z-10">
+                  {loading ? 'Creating account...' : 'Start free trial'}
+                </span>
+              </button>
             </form>
 
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
-                Already have an account?{' '}
-                <Link
-                  href="/signin"
-                  className="text-primary-500 hover:text-primary-600 font-medium transition-colors"
-                >
-                  Sign in
-                </Link>
-              </p>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-gray-500">Already have an account?</span>
+              </div>
             </div>
+
+            <Link
+              href="/signin"
+              className="group relative overflow-hidden w-full text-blue-600 border-2 border-blue-600 py-3 rounded-2xl font-semibold text-lg transition-all duration-300 hover:transform hover:-translate-y-0.5 hover:shadow-lg shadow-sm hover:text-white block text-center"
+            >
+              <span className="absolute inset-0 bg-blue-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+              <span className="absolute inset-0 bg-blue-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-right delay-75"></span>
+              <span className="relative z-10">Sign in</span>
+            </Link>
           </CardContent>
         </Card>
 
-        {/* Trial info */}
-        <div className="mt-6 text-center space-y-1">
-          <p className="text-xs text-gray-500">
-            ✨ 7-day free trial • No credit card required
-          </p>
-          <p className="text-xs text-gray-500">
-            Cancel anytime during the trial period
-          </p>
+        {/* Features preview */}
+        <div className="mt-6 text-center">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-gray-200">
+            <p className="text-sm text-gray-600 font-medium mb-2">✨ Free 7-day trial includes:</p>
+            <div className="text-xs text-gray-500 space-y-1">
+              <p>• Connect your Teachable account</p>
+              <p>• Full analytics dashboard</p>
+              <p>• Revenue and engagement insights</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
