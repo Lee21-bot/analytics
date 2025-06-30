@@ -27,39 +27,30 @@ yarn install
 ```
 
 3. **Set up environment variables**
-```bash
-cp .env.example .env.local
-```
 
-Edit `.env.local` with your configuration:
+Create a `.env.local` file in the root directory:
 ```env
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
-# Stripe
+# Stripe (Optional for MVP)
 STRIPE_SECRET_KEY=your_stripe_secret_key
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
 
-# Teachable API
+# Teachable API (For integration)
 TEACHABLE_CLIENT_ID=your_teachable_client_id
 TEACHABLE_CLIENT_SECRET=your_teachable_client_secret
-
-# NextAuth
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your_nextauth_secret
-
-# App Configuration
-NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 4. **Set up the database**
-```bash
-# Run Supabase migrations
-npx supabase db reset
-```
+
+In your Supabase project:
+1. Go to the SQL Editor in your Supabase dashboard
+2. Copy the contents of `supabase/migrations/001_initial_schema.sql`
+3. Paste and execute the SQL to create all tables and policies
 
 5. **Run the development server**
 ```bash

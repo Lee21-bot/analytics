@@ -19,10 +19,10 @@ export default function HomePage() {
               <Link href="#pricing" className="text-gray-600 hover:text-gray-900 transition-colors">
                 Pricing
               </Link>
-              <Link href="/auth/signin" className="text-gray-600 hover:text-gray-900 transition-colors">
+              <Link href="/signin" className="text-gray-600 hover:text-gray-900 transition-colors">
                 Sign In
               </Link>
-              <Link href="/auth/signup" className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-lg font-medium transition-all duration-150 hover:transform hover:-translate-y-0.5">
+              <Link href="/signup" className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-lg font-medium transition-all duration-150 hover:transform hover:-translate-y-0.5">
                 Get Started
               </Link>
             </nav>
@@ -42,7 +42,7 @@ export default function HomePage() {
               The analytics dashboard built specifically for course creators. Connect your Teachable account and get instant insights to optimize your content and maximize revenue.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/auth/signup" className="bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-150 hover:transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
+              <Link href="/signup" className="bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-150 hover:transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
                 Start Free Trial
                 <ArrowRight className="inline ml-2 h-5 w-5" />
               </Link>
@@ -116,7 +116,7 @@ export default function HomePage() {
             <p className="text-xl text-gray-600 mb-8">
               Join thousands of course creators who are already using CourseIQ to grow their online education business.
             </p>
-            <Link href="/auth/signup" className="bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-150 hover:transform hover:-translate-y-1 shadow-lg hover:shadow-xl inline-block">
+            <Link href="/signup" className="bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-150 hover:transform hover:-translate-y-1 shadow-lg hover:shadow-xl inline-block">
               Start Your Free Trial
               <ArrowRight className="inline ml-2 h-5 w-5" />
             </Link>
